@@ -12,6 +12,7 @@ import uvicorn
 from llm import ConversationManager
 from embeddings import VectorStore, EmbeddingGenerator, AdvancedClinicalTrialSearch
 from config_llm import get_env_config
+from patient_extraction import PatientInfoExtractor, PatientMatcher
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -43,6 +44,10 @@ class SearchRequest(BaseModel):
     filters: Optional[Dict] = Field(None, description="Additional search filters")
     k: int = Field(5, description="Number of results to return", ge=1, le=20)
 
+class PatientExtractionRequest(BaseModel):
+    patient_text: str = Field(..., description="Patient description text", min_length=10, max_length=2000)
+    num_results: int = Field(10, description="Number of trials to match", ge=1, le=20)
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Clinical Trial Finder Chat API",
@@ -65,11 +70,13 @@ app.add_middleware(
 # Global variables for system components
 conversation_manager: Optional[ConversationManager] = None
 search_engine: Optional[AdvancedClinicalTrialSearch] = None
+patient_extractor: Optional[PatientInfoExtractor] = None
+patient_matcher: Optional[PatientMatcher] = None
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize system components on startup."""
-    global conversation_manager, search_engine
+    global conversation_manager, search_engine, patient_extractor, patient_matcher
     
     try:
         logger.info("Initializing clinical trial search system...")
@@ -83,6 +90,11 @@ async def startup_event():
         
         # Initialize conversation manager with search integration
         conversation_manager = ConversationManager(search_engine=search_engine)
+        
+        # Initialize patient extraction components
+        # Note: Using conversation_manager's GPT-4 client for extraction
+        patient_extractor = PatientInfoExtractor(conversation_manager.gpt4_client)
+        patient_matcher = PatientMatcher(search_engine, patient_extractor)
         
         logger.info("System initialization completed successfully")
         
@@ -103,6 +115,11 @@ async def root():
             "start_conversation": "/conversations/start",
             "explain_trial": "/trials/{nct_id}/explain",
             "search": "/search",
+            "patient_extract": "/patient/extract",
+            "patient_match": "/patient/extract-and-match",
+            "conversations_list": "/conversations",
+            "conversation_load": "/conversations/{conversation_id}/load",
+            "conversation_delete": "/conversations/{conversation_id}",
             "health": "/health",
             "stats": "/stats"
         }
@@ -268,20 +285,146 @@ async def search_trials(request: SearchRequest):
         logger.error(f"Error in search endpoint: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.delete("/conversations/{conversation_id}")
-async def end_conversation(conversation_id: str):
-    """End a specific conversation."""
+@app.post("/patient/extract-and-match")
+async def extract_and_match_patient(request: PatientExtractionRequest):
+    """Extract patient information from text and match with clinical trials."""
+    if not patient_matcher:
+        raise HTTPException(status_code=503, detail="Patient extraction system not initialized")
+    
+    try:
+        # Extract patient info and match trials
+        result = await patient_matcher.match_patient(
+            patient_text=request.patient_text,
+            num_results=request.num_results
+        )
+        
+        # Format the matched trials for response
+        formatted_trials = []
+        for trial in result.get("matched_trials", []):
+            formatted_trials.append({
+                "nct_id": trial["NCTId"],
+                "title": trial["metadata"].get("BriefTitle", ""),
+                "condition": trial["metadata"].get("Condition", ""),
+                "status": trial["metadata"].get("OverallStatus", ""),
+                "phase": trial["metadata"].get("Phase", ""),
+                "location": trial["metadata"].get("LocationState", ""),
+                "score": trial.get("reranked_score", trial["score"])
+            })
+        
+        return {
+            "patient_profile": result["patient_info"],
+            "patient_summary": result["patient_summary"],
+            "search_query": result["search_query"],
+            "search_filters": result["search_filters"],
+            "matched_trials": formatted_trials,
+            "total_matches": result["match_count"],
+            "timestamp": result["timestamp"]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in patient extraction endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/patient/extract")
+async def extract_patient_info(request: PatientExtractionRequest):
+    """Extract patient information from text without matching trials."""
+    if not patient_extractor:
+        raise HTTPException(status_code=503, detail="Patient extraction system not initialized")
+    
+    try:
+        # Extract patient information
+        patient_info = await patient_extractor.extract_from_text(request.patient_text)
+        
+        # Generate search query and filters
+        search_query = patient_extractor.create_search_query(patient_info)
+        search_filters = patient_extractor.create_filters(patient_info)
+        patient_summary = patient_extractor.generate_summary(patient_info)
+        
+        return {
+            "patient_info": patient_info,
+            "patient_summary": patient_summary,
+            "suggested_search_query": search_query,
+            "suggested_filters": search_filters,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error extracting patient information: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/conversations")
+async def list_conversations(limit: Optional[int] = 20):
+    """List saved conversations with summary information."""
     if not conversation_manager:
         raise HTTPException(status_code=503, detail="System not initialized")
     
-    success = conversation_manager.end_conversation(conversation_id)
+    try:
+        conversations = conversation_manager.list_saved_conversations(limit=limit)
+        
+        return {
+            "conversations": conversations,
+            "total_count": len(conversations),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error listing conversations: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/conversations/{conversation_id}/load")
+async def load_conversation(conversation_id: str):
+    """Load a saved conversation back into memory."""
+    if not conversation_manager:
+        raise HTTPException(status_code=503, detail="System not initialized")
     
-    if not success:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+    try:
+        conversation = conversation_manager.load_conversation_from_state(conversation_id)
+        
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found in saved state")
+        
+        return {
+            "conversation_id": conversation.conversation_id,
+            "conversation_type": conversation.conversation_type,
+            "message_count": len(conversation.messages),
+            "created_at": conversation.created_at.isoformat(),
+            "last_activity": conversation.last_activity.isoformat(),
+            "status": "loaded",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading conversation {conversation_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.delete("/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: str, permanent: bool = False):
+    """
+    Delete a conversation. 
+    
+    Args:
+        conversation_id: ID of conversation to delete
+        permanent: If True, delete from persistent storage too
+    """
+    if not conversation_manager:
+        raise HTTPException(status_code=503, detail="System not initialized")
+    
+    # Try to end active conversation first
+    conversation_manager.end_conversation(conversation_id)
+    
+    # If permanent deletion requested, remove from persistent state too
+    if permanent:
+        deleted = conversation_manager.delete_saved_conversation(conversation_id)
+        if not deleted:
+            # Check if it was at least in memory
+            if conversation_id not in conversation_manager.conversations:
+                raise HTTPException(status_code=404, detail="Conversation not found")
     
     return {
         "conversation_id": conversation_id,
-        "status": "ended",
+        "status": "permanently deleted" if permanent else "ended",
         "timestamp": datetime.now().isoformat()
     }
 

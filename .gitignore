@@ -1,4 +1,5 @@
 # Data files - these should not be committed
+CLAUDE.md
 data/raw/*
 data/processed/*
 data/logs/*

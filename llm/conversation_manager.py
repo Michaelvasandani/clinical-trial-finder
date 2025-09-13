@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .gpt4_client import GPT4Client
 from .medical_prompts import MedicalPrompts
+from conversation_state import ConversationStateManager
 from config_llm import (
     MAX_CONVERSATION_HISTORY, MAX_CONTEXT_LENGTH, CONVERSATION_TIMEOUT,
     CONVERSATION_TYPES, CONVERSATIONS_DIR, LOG_CONVERSATIONS
@@ -19,12 +20,13 @@ logger = logging.getLogger(__name__)
 class ConversationManager:
     """Manages clinical trial conversations with context and safety."""
     
-    def __init__(self, search_engine=None):
+    def __init__(self, search_engine=None, enable_persistence=True):
         """
         Initialize conversation manager.
         
         Args:
             search_engine: Optional AdvancedClinicalTrialSearch instance
+            enable_persistence: Whether to enable conversation state persistence
         """
         self.gpt4_client = GPT4Client()
         self.prompts = MedicalPrompts()
@@ -33,11 +35,15 @@ class ConversationManager:
         # Active conversations
         self.conversations: Dict[str, Conversation] = {}
         
+        # State persistence
+        self.enable_persistence = enable_persistence
+        self.state_manager = ConversationStateManager() if enable_persistence else None
+        
         # Load system prompts
         self.system_prompts = self.prompts.get_system_prompts()
         self.response_templates = self.prompts.get_response_templates()
         
-        logger.info("ConversationManager initialized")
+        logger.info(f"ConversationManager initialized (persistence: {enable_persistence})")
     
     async def start_conversation(
         self,
@@ -64,6 +70,10 @@ class ConversationManager:
         )
         
         self.conversations[conversation_id] = conversation
+        
+        # Save initial state if persistence enabled
+        if self.enable_persistence and self.state_manager:
+            self.state_manager.save_conversation(conversation)
         
         logger.info(f"Started new conversation: {conversation_id} (type: {conversation_type})")
         return conversation_id
@@ -137,6 +147,10 @@ class ConversationManager:
             # Add cost information if available
             if "estimated_cost" in response:
                 full_response["metadata"]["estimated_cost"] = response["estimated_cost"]
+            
+            # Save updated conversation state if persistence enabled
+            if self.enable_persistence and self.state_manager:
+                self.state_manager.save_conversation(conversation)
             
             # Log conversation if enabled
             if LOG_CONVERSATIONS:
@@ -269,6 +283,10 @@ class ConversationManager:
     def end_conversation(self, conversation_id: str) -> bool:
         """End and clean up a conversation."""
         if conversation_id in self.conversations:
+            # Save final state before removing from memory
+            if self.enable_persistence and self.state_manager:
+                self.state_manager.save_conversation(self.conversations[conversation_id])
+            
             del self.conversations[conversation_id]
             logger.info(f"Ended conversation: {conversation_id}")
             return True
@@ -289,6 +307,83 @@ class ConversationManager:
         
         return len(expired_ids)
     
+    def load_conversation_from_state(self, conversation_id: str) -> Optional["Conversation"]:
+        """
+        Load conversation from persistent state.
+        
+        Args:
+            conversation_id: ID of conversation to load
+            
+        Returns:
+            Loaded conversation or None if not found
+        """
+        if not self.enable_persistence or not self.state_manager:
+            return None
+        
+        try:
+            state_data = self.state_manager.load_conversation(conversation_id)
+            if not state_data:
+                return None
+            
+            # Recreate conversation object from state
+            conversation = Conversation(
+                conversation_id=state_data["conversation_id"],
+                conversation_type=state_data["conversation_type"],
+                config=state_data["config"],
+                initial_context=state_data.get("initial_context")
+            )
+            
+            # Restore timestamps
+            conversation.created_at = datetime.fromisoformat(state_data["created_at"])
+            conversation.last_activity = datetime.fromisoformat(state_data["last_activity"])
+            
+            # Restore messages
+            conversation.messages = state_data["messages"]
+            
+            # Add to active conversations
+            self.conversations[conversation_id] = conversation
+            
+            logger.info(f"Loaded conversation from state: {conversation_id}")
+            return conversation
+            
+        except Exception as e:
+            logger.error(f"Error loading conversation {conversation_id} from state: {e}")
+            return None
+    
+    def list_saved_conversations(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        List all saved conversations.
+        
+        Args:
+            limit: Optional limit on number of conversations to return
+            
+        Returns:
+            List of conversation summaries
+        """
+        if not self.enable_persistence or not self.state_manager:
+            return []
+        
+        return self.state_manager.list_active_conversations(limit=limit)
+    
+    def delete_saved_conversation(self, conversation_id: str) -> bool:
+        """
+        Delete a saved conversation from persistent state.
+        
+        Args:
+            conversation_id: ID of conversation to delete
+            
+        Returns:
+            True if deleted successfully
+        """
+        if not self.enable_persistence or not self.state_manager:
+            return False
+        
+        # Remove from memory if present
+        if conversation_id in self.conversations:
+            del self.conversations[conversation_id]
+        
+        return self.state_manager.delete_conversation(conversation_id)
+    
     def get_stats(self) -> Dict[str, Any]:
         """Get conversation manager statistics."""
         active_conversations = len(self.conversations)
@@ -299,12 +394,19 @@ class ConversationManager:
             conv_type = conv.conversation_type
             type_distribution[conv_type] = type_distribution.get(conv_type, 0) + 1
         
-        return {
+        stats = {
             "active_conversations": active_conversations,
             "conversation_types": type_distribution,
             "search_enabled": self.search_engine is not None,
-            "gpt4_stats": self.gpt4_client.get_usage_stats()
+            "gpt4_stats": self.gpt4_client.get_usage_stats(),
+            "persistence_enabled": self.enable_persistence
         }
+        
+        # Add persistence stats if enabled
+        if self.enable_persistence and self.state_manager:
+            stats["persistence_stats"] = self.state_manager.get_stats()
+        
+        return stats
 
 
 class Conversation:
