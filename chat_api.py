@@ -9,10 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
 
-from llm import ConversationManager
-from embeddings import VectorStore, EmbeddingGenerator, AdvancedClinicalTrialSearch
-from config_llm import get_env_config
-from patient_extraction import PatientInfoExtractor, PatientMatcher
+from core.conversation_manager import ConversationManager
+from src.vector_store import VectorStore
+from src.embedding_generator import EmbeddingGenerator
+from src.advanced_search import AdvancedClinicalTrialSearch
+from config import get_env_config
+from core.patient_extraction import PatientInfoExtractor, PatientMatcher
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

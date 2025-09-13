@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from config_embeddings import (
+from config import (
     INPUT_CSV,
     FAISS_INDEX_PATH,
     METADATA_PATH,
@@ -16,11 +16,9 @@ from config_embeddings import (
     BATCH_SIZE,
     USE_GPU
 )
-from embeddings import (
-    DocumentProcessor,
-    EmbeddingGenerator,
-    VectorStore
-)
+from src.document_processor import DocumentProcessor
+from src.embedding_generator import EmbeddingGenerator
+from src.vector_store import VectorStore
 
 # Setup logging
 logging.basicConfig(

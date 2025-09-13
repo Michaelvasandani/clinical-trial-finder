@@ -16,11 +16,9 @@ from config import (
     LOG_LEVEL,
     MAX_TRIALS_PER_CONDITION,
 )
-from data_ingestion import (
-    ClinicalTrialsAPIClient,
-    ClinicalTrialsParser,
-    DataStorage,
-)
+from src.api_client import ClinicalTrialsAPIClient
+from src.data_parser import ClinicalTrialsParser
+from src.data_storage import DataStorage
 
 
 def setup_logging():

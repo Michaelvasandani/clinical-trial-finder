@@ -6,12 +6,12 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-from config_embeddings import (
+from ..config import (
     FIELDS_TO_EMBED,
     METADATA_FIELDS,
-    MAX_TOKENS,
+    MAX_TOKENS_EMBED as MAX_TOKENS,
     CHUNK_OVERLAP,
-    MODEL_NAME
+    EMBEDDING_MODEL_NAME as MODEL_NAME
 )
 
 logger = logging.getLogger(__name__)

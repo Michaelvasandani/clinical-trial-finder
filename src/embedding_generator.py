@@ -7,8 +7,8 @@ from typing import Dict, List, Optional, Union
 from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 
-from config_embeddings import (
-    MODEL_NAME,
+from ..config import (
+    EMBEDDING_MODEL_NAME as MODEL_NAME,
     BATCH_SIZE,
     USE_GPU,
     SHOW_PROGRESS,
