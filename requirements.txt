@@ -1,0 +1,11 @@
+langchain
+sentence-transformers
+faiss-cpu
+chromadb
+fastapi
+uvicorn
+pandas
+requests
+xmltodict
+openai
+python-dotenv

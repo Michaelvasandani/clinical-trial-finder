@@ -1,0 +1,138 @@
+# Data files - these should not be committed
+data/raw/*
+data/processed/*
+data/logs/*
+
+# Keep directory structure with .gitkeep files
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/logs/.gitkeep
+
+# Embeddings - exclude data files but keep code
+embeddings/*.index
+embeddings/*.json
+embeddings/__pycache__/
+
+# Test files - exclude from repository
+test_*.py
+*_test.py
+test_*.json
+*_test.json
+test_*.txt
+*_test.txt
+tests/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+.conda/
+conda-env/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE - VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# IDE - PyCharm
+.idea/
+*.iml
+*.iws
+out/
+
+# IDE - Sublime
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+desktop.ini
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
