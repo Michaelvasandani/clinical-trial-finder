@@ -9,3 +9,5 @@ requests
 xmltodict
 openai
 python-dotenv
+streamlit
+plotly

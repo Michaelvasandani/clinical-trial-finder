@@ -10,7 +10,7 @@ from pathlib import Path
 from core.gpt4_client import GPT4Client
 from core.medical_prompts import MedicalPrompts
 from core.conversation_state import ConversationStateManager
-from ..config import (
+from config import (
     MAX_CONVERSATION_HISTORY, MAX_CONTEXT_LENGTH, CONVERSATION_TIMEOUT,
     CONVERSATION_TYPES, CONVERSATIONS_DIR, LOG_CONVERSATIONS
 )

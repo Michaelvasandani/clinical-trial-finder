@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import faiss
 import numpy as np
 
-from ..config import (
+from config import (
     FAISS_INDEX_PATH,
     METADATA_PATH,
     CHUNK_MAPPING_PATH,

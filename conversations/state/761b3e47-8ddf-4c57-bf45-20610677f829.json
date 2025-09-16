@@ -1,0 +1,28 @@
+{
+  "conversation_id": "761b3e47-8ddf-4c57-bf45-20610677f829",
+  "conversation_type": "general_inquiry",
+  "created_at": "2025-09-15T18:11:32.184540",
+  "last_activity": "2025-09-15T18:11:40.382400",
+  "message_count": 2,
+  "config": {
+    "system_prompt_key": "general_medical",
+    "max_tokens": 3000,
+    "temperature": 0.3,
+    "include_search": true
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "find me trials in america related to diabetes for people under 45",
+      "timestamp": "2025-09-15T18:11:40.382379",
+      "type": "message"
+    },
+    {
+      "role": "assistant",
+      "content": "I'm sorry, but as an AI, I don't have real-time data access to search for specific clinical trials. However, I can guide you on how to do this.\n\nYou can use clinical trial databases such as ClinicalTrials.gov to find trials. Here's a step-by-step guide:\n\n1. Visit ClinicalTrials.gov.\n2. In the search bar, type \"Diabetes\".\n3. Click on \"Advanced Search\" to refine your search criteria.\n4. In the \"Eligibility Criteria\" section, you can specify the age range as \"Under 45\".\n5. In the \"Locations\" section, select \"United States\".\n6. Click on \"Search\" to view the results.\n\nEach trial listing will provide information about the study's purpose, the intervention (like a drug or therapy), and eligibility criteria. It's important to discuss these trials with your healthcare provider to understand if they might be a good fit for you.\n\nRemember, participating in a clinical trial is a personal decision that should be made in consultation with your healthcare team, considering your specific medical history, current health status, and personal preferences.",
+      "timestamp": "2025-09-15T18:11:40.382396",
+      "type": "message"
+    }
+  ],
+  "initial_context": null
+}

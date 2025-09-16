@@ -1,7 +1,7 @@
 """System prompts and templates for medical conversations."""
 
 from typing import Dict
-from ..config import MEDICAL_DISCLAIMER
+from config import MEDICAL_DISCLAIMER
 
 class MedicalPrompts:
     """Collection of system prompts for different conversation types."""

@@ -1,0 +1,1 @@
+"""UI components for the Clinical Trial Finder Streamlit app."""

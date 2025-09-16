@@ -15,16 +15,83 @@ RATE_LIMIT_DELAY = 1.5  # Seconds between requests to respect rate limits
 
 # Target conditions for data collection
 CONDITIONS = [
+    # Core Chronic Diseases
     "cancer",
     "diabetes", 
     "heart disease",
     "hypertension",
-    "alzheimer disease"
+    "obesity",
+    
+    # Mental Health
+    "depression",
+    "anxiety",
+    "PTSD",
+    "bipolar disorder",
+    "ADHD",
+    "schizophrenia",
+    "autism",
+    
+    # Neurological
+    "alzheimer disease",
+    "parkinson disease",
+    "multiple sclerosis",
+    "epilepsy",
+    "stroke",
+    "migraine",
+    "dementia",
+    
+    # Autoimmune/Inflammatory
+    "rheumatoid arthritis",
+    "lupus",
+    "crohn disease",
+    "psoriasis",
+    "fibromyalgia",
+    "ulcerative colitis",
+    
+    # Respiratory
+    "asthma",
+    "COPD",
+    "lung cancer",
+    "pulmonary fibrosis",
+    "sleep apnea",
+    
+    # Women's Health
+    "breast cancer",
+    "ovarian cancer",
+    "PCOS",
+    "endometriosis",
+    
+    # Men's Health
+    "prostate cancer",
+    "erectile dysfunction",
+    
+    # Kidney/Liver
+    "chronic kidney disease",
+    "cirrhosis",
+    "fatty liver disease",
+    
+    # Blood/Oncology
+    "leukemia",
+    "lymphoma",
+    "anemia",
+    "sickle cell disease",
+    
+    # Infectious Diseases
+    "COVID-19",
+    "HIV",
+    "hepatitis",
+    "tuberculosis",
+    
+    # Other Common
+    "thyroid disorders",
+    "osteoporosis",
+    "chronic pain",
+    "IBS"
 ]
 
 # Data collection limits
-MAX_TRIALS_PER_CONDITION = 400
-TOTAL_TARGET_TRIALS = 1500
+MAX_TRIALS_PER_CONDITION = 600
+TOTAL_TARGET_TRIALS = 30000
 
 # Fields to extract from API response
 REQUIRED_FIELDS = [
@@ -396,7 +463,7 @@ for dir_path in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, LOG_DIR, CONVERSATI
     dir_path.mkdir(parents=True, exist_ok=True)
 
 # File paths for embeddings
-INPUT_CSV = PROCESSED_DATA_DIR / "clinical_trials_20250912_175505.csv"
+INPUT_CSV = PROCESSED_DATA_DIR / "clinical_trials_20250915_190308.csv"
 FAISS_INDEX_PATH = EMBEDDINGS_DIR / "clinical_trials.index"
 METADATA_PATH = EMBEDDINGS_DIR / "clinical_trials_metadata.json"
 CHUNK_MAPPING_PATH = EMBEDDINGS_DIR / "chunk_mapping.json"

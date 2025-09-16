@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-from ..config import (
+from config import (
     FIELDS_TO_EMBED,
     METADATA_FIELDS,
     MAX_TOKENS_EMBED as MAX_TOKENS,

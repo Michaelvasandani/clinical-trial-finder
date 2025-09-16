@@ -351,7 +351,7 @@ class ClinicalTrialsParser:
         df = pd.DataFrame(parsed_studies)
         
         # Ensure all required columns exist
-        from ..config import REQUIRED_FIELDS
+        from config import REQUIRED_FIELDS
         for field in REQUIRED_FIELDS:
             if field not in df.columns:
                 df[field] = ""

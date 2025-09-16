@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from ..config import (
+from config import (
     OUTPUT_FORMATS,
     PROCESSED_DATA_DIR,
     RAW_DATA_DIR,

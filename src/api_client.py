@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 import requests
 from tqdm import tqdm
 
-from ..config import (
+from config import (
     API_BASE_URL,
     API_FIELDS,
     MAX_RETRIES,

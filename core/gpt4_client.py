@@ -10,7 +10,7 @@ import openai
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from ..config import (
+from config import (
     DEFAULT_MODEL, FALLBACK_MODEL, MAX_TOKENS, TEMPERATURE, 
     LLM_REQUEST_TIMEOUT as REQUEST_TIMEOUT, LLM_MAX_RETRIES as MAX_RETRIES, 
     LLM_RETRY_DELAY as RETRY_DELAY, MODEL_COSTS, MAX_DAILY_COST, TRACK_USAGE
