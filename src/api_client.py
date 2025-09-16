@@ -93,8 +93,8 @@ class ClinicalTrialsAPIClient:
         params = {
             "query.cond": condition,
             "pageSize": min(PAGE_SIZE, max_results),
-            "format": "json",
-            "fields": API_FIELDS
+            "format": "json"
+            # Note: Removed "fields" parameter to get complete data including contact information
         }
         
         # Add any additional filters
@@ -162,8 +162,8 @@ class ClinicalTrialsAPIClient:
         """
         params = {
             "query.id": nct_id,
-            "format": "json",
-            "fields": API_FIELDS
+            "format": "json"
+            # Note: Removed "fields" parameter to get complete data including contact information
         }
         
         response = self._make_request(params)
@@ -211,8 +211,8 @@ class ClinicalTrialsAPIClient:
         params = {
             "query.cond": "cancer",
             "pageSize": 1,
-            "format": "json",
-            "fields": "NCTId"
+            "format": "json"
+            # Note: For test connection, we don't need field filtering
         }
         
         try:

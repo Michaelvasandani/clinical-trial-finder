@@ -95,15 +95,15 @@ def generate_embeddings_for_trials(
     logger.info(f"Embedding generation completed in {embed_time:.2f} seconds")
     logger.info(f"Generated embeddings shape: {embeddings.shape}")
     
-    # Create vector store
-    logger.info("Creating vector store...")
+    # Add embeddings to vector store
+    logger.info("Adding embeddings to vector store...")
     vector_store.add_embeddings(
         embeddings,
         metadata,
         chunk_mapping
     )
-    
-    # Save to disk
+
+    # Save to disk (for FAISS) or data is automatically persisted (for PostgreSQL)
     logger.info("Saving embeddings and metadata...")
     vector_store.save()
     

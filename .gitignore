@@ -4,7 +4,7 @@ grag.md
 data/raw/*
 data/processed/*
 data/logs/*
-
+conversations/state
 # Keep directory structure with .gitkeep files
 !data/raw/.gitkeep
 !data/processed/.gitkeep
@@ -14,7 +14,8 @@ data/logs/*
 embeddings/*.index
 embeddings/*.json
 embeddings/__pycache__/
-
+conversations
+pgvector
 # Test files - exclude from repository
 test_*.py
 *_test.py

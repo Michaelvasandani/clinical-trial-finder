@@ -137,6 +137,21 @@ REQUIRED_FIELDS = [
     "CollaboratorClass"
 ]
 
+# Contact information fields (extracted from contactsLocationsModule, not available as API fields)
+CONTACT_FIELDS = [
+    "CentralContactName",
+    "CentralContactRole",
+    "CentralContactPhone",
+    "CentralContactEmail",
+    "LocationContactName",
+    "LocationContactRole",
+    "LocationContactPhone",
+    "LocationContactEmail"
+]
+
+# All fields for DataFrame (includes contact fields)
+ALL_FIELDS = REQUIRED_FIELDS + CONTACT_FIELDS
+
 # API query fields parameter (formatted for API request)
 API_FIELDS = "|".join(REQUIRED_FIELDS)
 
@@ -276,12 +291,15 @@ FIELDS_TO_EMBED = {
 
 # Metadata fields to store but not embed
 METADATA_FIELDS = [
-    "NCTId", "BriefTitle", "OverallStatus", "Phase", "StudyType", 
+    "NCTId", "BriefTitle", "OverallStatus", "Phase", "StudyType",
     "Condition", "MinimumAge", "MaximumAge", "Gender", "HealthyVolunteers",
     "LocationCity", "LocationState", "LocationCountry", "LocationFacility", "LocationStatus",
-    "StartDate", "PrimaryCompletionDate", "CompletionDate", 
+    "StartDate", "PrimaryCompletionDate", "CompletionDate",
     "EnrollmentCount", "EnrollmentType", "LeadSponsorName", "LeadSponsorClass",
-    "InterventionName", "InterventionType", "SearchCondition"
+    "InterventionName", "InterventionType", "SearchCondition",
+    # Contact Information Fields
+    "CentralContactName", "CentralContactRole", "CentralContactPhone", "CentralContactEmail",
+    "LocationContactName", "LocationContactRole", "LocationContactPhone", "LocationContactEmail"
 ]
 
 # Vector Store Configuration
@@ -463,7 +481,7 @@ for dir_path in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, LOG_DIR, CONVERSATI
     dir_path.mkdir(parents=True, exist_ok=True)
 
 # File paths for embeddings
-INPUT_CSV = PROCESSED_DATA_DIR / "clinical_trials_20250915_190308.csv"
+INPUT_CSV = PROCESSED_DATA_DIR / "clinical_trials_20250916_012515.csv"
 FAISS_INDEX_PATH = EMBEDDINGS_DIR / "clinical_trials.index"
 METADATA_PATH = EMBEDDINGS_DIR / "clinical_trials_metadata.json"
 CHUNK_MAPPING_PATH = EMBEDDINGS_DIR / "chunk_mapping.json"
@@ -476,6 +494,30 @@ LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_CONVERSATIONS = True  # Save conversation logs (anonymized)
 LOG_SEARCH_QUERIES = True  # Log search patterns
+
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+
+# PostgreSQL Configuration
+DATABASE_CONFIG = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", "5432")),
+    "database": os.getenv("DB_NAME", "clinical_trials"),
+    "user": os.getenv("DB_USER", os.getenv("USER", "postgres")),
+    "password": os.getenv("DB_PASSWORD", ""),
+}
+
+# Vector Storage Configuration
+VECTOR_STORAGE_TYPE = "postgresql"  # Options: "faiss", "postgresql"
+USE_PGVECTOR_EXTENSION = False  # Whether to use native pgvector extension
+VECTOR_SIMILARITY_METHOD = "cosine"  # Options: "cosine", "euclidean", "inner_product"
+
+# Database Performance Settings
+DB_CONNECTION_POOL_SIZE = 5
+DB_MAX_OVERFLOW = 10
+DB_BATCH_INSERT_SIZE = 100
+DB_QUERY_TIMEOUT = 30  # Seconds
 
 # =============================================================================
 # ENVIRONMENT VARIABLES

@@ -11,3 +11,5 @@ openai
 python-dotenv
 streamlit
 plotly
+psycopg2-binary
+pgvector

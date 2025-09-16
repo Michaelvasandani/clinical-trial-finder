@@ -154,8 +154,9 @@ class ClinicalTrialsParser:
         outcomes_module = protocol_section.get("outcomesModule", {})
         parsed.update(self._parse_outcomes(outcomes_module))
         
-        # Locations
+        # Contacts and Locations
         locations_module = protocol_section.get("contactsLocationsModule", {})
+        parsed.update(self._parse_central_contacts(locations_module))
         parsed.update(self._parse_locations(locations_module))
         
         # Sponsors
@@ -260,32 +261,63 @@ class ClinicalTrialsParser:
             "LocationState": "",
             "LocationCountry": "",
             "LocationFacility": "",
-            "LocationStatus": ""
+            "LocationStatus": "",
+            "LocationContactName": "",
+            "LocationContactRole": "",
+            "LocationContactPhone": "",
+            "LocationContactEmail": ""
         }
-        
+
         locations = locations_module.get("locations", [])
         if not locations:
             return parsed
-        
+
         cities = []
         states = []
         countries = []
         facilities = []
         statuses = []
-        
+        contact_names = []
+        contact_roles = []
+        contact_phones = []
+        contact_emails = []
+
         for location in locations:
             cities.append(location.get("city", ""))
             states.append(location.get("state", ""))
             countries.append(location.get("country", ""))
             facilities.append(location.get("facility", ""))
             statuses.append(location.get("status", ""))
-        
+
+            # Extract contact information from location
+            location_contacts = location.get("contacts", [])
+            if location_contacts:
+                # Use the first contact for this location
+                contact = location_contacts[0]
+                contact_names.append(contact.get("name", ""))
+                contact_roles.append(contact.get("role", ""))
+                contact_phones.append(self._format_phone(
+                    contact.get("phone", ""),
+                    contact.get("phoneExt", "")
+                ))
+                contact_emails.append(contact.get("email", ""))
+            else:
+                # No contact information for this location
+                contact_names.append("")
+                contact_roles.append("")
+                contact_phones.append("")
+                contact_emails.append("")
+
         parsed["LocationCity"] = "; ".join(filter(None, cities))
         parsed["LocationState"] = "; ".join(filter(None, states))
         parsed["LocationCountry"] = "; ".join(filter(None, countries))
         parsed["LocationFacility"] = "; ".join(filter(None, facilities))
         parsed["LocationStatus"] = "; ".join(filter(None, statuses))
-        
+        parsed["LocationContactName"] = "; ".join(filter(None, contact_names))
+        parsed["LocationContactRole"] = "; ".join(filter(None, contact_roles))
+        parsed["LocationContactPhone"] = "; ".join(filter(None, contact_phones))
+        parsed["LocationContactEmail"] = "; ".join(filter(None, contact_emails))
+
         return parsed
     
     def _parse_sponsors(self, sponsor_module: Dict) -> Dict:
@@ -321,7 +353,44 @@ class ClinicalTrialsParser:
             parsed["CollaboratorClass"] = "; ".join(filter(None, classes))
         
         return parsed
-    
+
+    def _parse_central_contacts(self, contacts_locations_module: Dict) -> Dict:
+        """Parse central contact information."""
+        parsed = {
+            "CentralContactName": "",
+            "CentralContactRole": "",
+            "CentralContactPhone": "",
+            "CentralContactEmail": ""
+        }
+
+        central_contacts = contacts_locations_module.get("centralContacts", [])
+        if not central_contacts:
+            return parsed
+
+        # Extract information from the primary central contact
+        primary_contact = central_contacts[0]
+
+        parsed["CentralContactName"] = primary_contact.get("name", "")
+        parsed["CentralContactRole"] = primary_contact.get("role", "")
+        parsed["CentralContactPhone"] = self._format_phone(
+            primary_contact.get("phone", ""),
+            primary_contact.get("phoneExt", "")
+        )
+        parsed["CentralContactEmail"] = primary_contact.get("email", "")
+
+        return parsed
+
+    def _format_phone(self, phone: str, ext: str) -> str:
+        """Format phone number with extension."""
+        if not phone:
+            return ""
+
+        formatted_phone = phone
+        if ext:
+            formatted_phone += f" ext. {ext}"
+
+        return formatted_phone
+
     def _join_list(self, items: List[str]) -> str:
         """Join list items with semicolon."""
         if not items:
@@ -351,13 +420,13 @@ class ClinicalTrialsParser:
         df = pd.DataFrame(parsed_studies)
         
         # Ensure all required columns exist
-        from config import REQUIRED_FIELDS
-        for field in REQUIRED_FIELDS:
+        from config import ALL_FIELDS
+        for field in ALL_FIELDS:
             if field not in df.columns:
                 df[field] = ""
-        
+
         # Reorder columns
-        df = df[REQUIRED_FIELDS]
+        df = df[ALL_FIELDS]
         
         logger.info(f"Parsed {len(parsed_studies)} studies successfully")
         

@@ -272,7 +272,8 @@ async def search_trials(request: SearchRequest):
                 "age_range": f"{result['metadata'].get('MinimumAge', 'N/A')} - {result['metadata'].get('MaximumAge', 'N/A')}",
                 "gender": result["metadata"].get("Gender", ""),
                 "score": result.get("reranked_score", result["score"]),
-                "summary": result["metadata"].get("BriefSummary", "")[:200] + "..." if result["metadata"].get("BriefSummary") else ""
+                "summary": result["metadata"].get("BriefSummary", "")[:200] + "..." if result["metadata"].get("BriefSummary") else "",
+                "metadata": result["metadata"]  # Include complete metadata for UI
             })
         
         return {
@@ -310,7 +311,8 @@ async def extract_and_match_patient(request: PatientExtractionRequest):
                 "status": trial["metadata"].get("OverallStatus", ""),
                 "phase": trial["metadata"].get("Phase", ""),
                 "location": trial["metadata"].get("LocationState", ""),
-                "score": trial.get("reranked_score", trial["score"])
+                "score": trial.get("reranked_score", trial["score"]),
+                "metadata": trial["metadata"]  # Include complete metadata for UI
             })
         
         return {
