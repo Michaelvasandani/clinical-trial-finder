@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "clinical-trial-finder-ui",
+  "builds": [
+    {
+      "src": "streamlit_app.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.11"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "streamlit_app.py"
+    }
+  ],
+  "env": {
+    "API_BASE_URL": "https://clinical-trial-finder-api.onrender.com"
+  },
+  "functions": {
+    "streamlit_app.py": {
+      "maxDuration": 30
+    }
+  }
+}

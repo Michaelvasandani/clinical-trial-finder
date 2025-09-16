@@ -4,6 +4,10 @@ import os
 from pathlib import Path
 from typing import Dict, List
 
+# Environment detection for deployment
+IS_PRODUCTION = os.getenv("RENDER") is not None or os.getenv("VERCEL") is not None
+IS_DEVELOPMENT = not IS_PRODUCTION
+
 # =============================================================================
 # DATA INGESTION CONFIGURATION
 # =============================================================================
@@ -466,22 +470,40 @@ MIN_MATCH_SCORE = 0.5  # Minimum score for trial matches
 # DIRECTORY PATHS AND SETUP
 # =============================================================================
 
-# Base paths
+# Base paths - environment-aware for deployment
 BASE_DIR = Path(__file__).parent
-DATA_DIR = BASE_DIR / "data"
+
+# Cloud-friendly path configuration
+if IS_PRODUCTION:
+    # In production, use environment variables or default to app directory
+    DATA_DIR = Path(os.getenv("DATA_PATH", "/opt/render/project/data"))
+    EMBEDDINGS_DIR = Path(os.getenv("EMBEDDINGS_PATH", "/opt/render/project/embeddings"))
+    CONVERSATIONS_DIR = Path(os.getenv("CONVERSATIONS_PATH", "/opt/render/project/conversations"))
+    LOGS_DIR = Path(os.getenv("LOGS_PATH", "/opt/render/project/logs"))
+else:
+    # Development paths (relative to project)
+    DATA_DIR = BASE_DIR / "data"
+    EMBEDDINGS_DIR = BASE_DIR / "embeddings"
+    CONVERSATIONS_DIR = BASE_DIR / "conversations"
+    LOGS_DIR = BASE_DIR / "logs"
+
+# Subdirectories
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 LOG_DIR = DATA_DIR / "logs"
-CONVERSATIONS_DIR = BASE_DIR / "conversations"
-LOGS_DIR = BASE_DIR / "logs"
-EMBEDDINGS_DIR = BASE_DIR / "embeddings"
 
 # Ensure directories exist
 for dir_path in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, LOG_DIR, CONVERSATIONS_DIR, LOGS_DIR, EMBEDDINGS_DIR]:
     dir_path.mkdir(parents=True, exist_ok=True)
 
-# File paths for embeddings
-INPUT_CSV = PROCESSED_DATA_DIR / "clinical_trials_20250916_012515.csv"
+# File paths for embeddings and data
+# Use environment variable for CSV file or find latest file
+if IS_PRODUCTION:
+    INPUT_CSV_NAME = os.getenv("INPUT_CSV_NAME", "clinical_trials_latest.csv")
+else:
+    INPUT_CSV_NAME = "clinical_trials_20250916_012515.csv"
+
+INPUT_CSV = PROCESSED_DATA_DIR / INPUT_CSV_NAME
 FAISS_INDEX_PATH = EMBEDDINGS_DIR / "clinical_trials.index"
 METADATA_PATH = EMBEDDINGS_DIR / "clinical_trials_metadata.json"
 CHUNK_MAPPING_PATH = EMBEDDINGS_DIR / "chunk_mapping.json"
@@ -500,13 +522,33 @@ LOG_SEARCH_QUERIES = True  # Log search patterns
 # =============================================================================
 
 # PostgreSQL Configuration
-DATABASE_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": int(os.getenv("DB_PORT", "5432")),
-    "database": os.getenv("DB_NAME", "clinical_trials"),
-    "user": os.getenv("DB_USER", os.getenv("USER", "postgres")),
-    "password": os.getenv("DB_PASSWORD", ""),
-}
+# Database configuration - cloud-friendly
+def get_database_config():
+    """Get database configuration from environment variables."""
+    # Try to parse DATABASE_URL first (for cloud deployment)
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        # Parse PostgreSQL URL format: postgresql://user:pass@host:port/dbname
+        import urllib.parse as urlparse
+        parsed = urlparse.urlparse(database_url)
+        return {
+            "host": parsed.hostname,
+            "port": parsed.port or 5432,
+            "database": parsed.path[1:],  # Remove leading slash
+            "user": parsed.username,
+            "password": parsed.password,
+        }
+    else:
+        # Fall back to individual environment variables (for development)
+        return {
+            "host": os.getenv("DB_HOST", "localhost"),
+            "port": int(os.getenv("DB_PORT", "5432")),
+            "database": os.getenv("DB_NAME", "clinical_trials"),
+            "user": os.getenv("DB_USER", os.getenv("USER", "postgres")),
+            "password": os.getenv("DB_PASSWORD", ""),
+        }
+
+DATABASE_CONFIG = get_database_config()
 
 # Vector Storage Configuration
 VECTOR_STORAGE_TYPE = "postgresql"  # Options: "faiss", "postgresql"
@@ -528,11 +570,18 @@ def get_env_config() -> Dict[str, str]:
     return {
         "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
         "OPENAI_ORG_ID": os.getenv("OPENAI_ORG_ID"),
+        "DATABASE_URL": os.getenv("DATABASE_URL"),  # For cloud database connection
         "ENVIRONMENT": os.getenv("ENVIRONMENT", "development"),
         "DEBUG": os.getenv("DEBUG", "false").lower() == "true",
         "CORS_ORIGINS": os.getenv("CORS_ORIGINS", ""),
         "MAX_REQUESTS_PER_MINUTE": int(os.getenv("MAX_REQUESTS_PER_MINUTE", "50")),
         "MAX_REQUESTS_PER_HOUR": int(os.getenv("MAX_REQUESTS_PER_HOUR", "1000")),
         "MAX_DAILY_COST_USD": float(os.getenv("MAX_DAILY_COST_USD", "50.0")),
-        "ALERT_COST_THRESHOLD_USD": float(os.getenv("ALERT_COST_THRESHOLD_USD", "40.0"))
+        "ALERT_COST_THRESHOLD_USD": float(os.getenv("ALERT_COST_THRESHOLD_USD", "40.0")),
+        # Deployment-specific paths
+        "DATA_PATH": os.getenv("DATA_PATH"),
+        "EMBEDDINGS_PATH": os.getenv("EMBEDDINGS_PATH"),
+        "CONVERSATIONS_PATH": os.getenv("CONVERSATIONS_PATH"),
+        "LOGS_PATH": os.getenv("LOGS_PATH"),
+        "INPUT_CSV_NAME": os.getenv("INPUT_CSV_NAME"),
     }

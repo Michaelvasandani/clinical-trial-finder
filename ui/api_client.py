@@ -161,13 +161,21 @@ class ClinicalTrialAPIClient:
 @st.cache_resource
 def get_api_client() -> ClinicalTrialAPIClient:
     """Get a cached API client instance."""
-    # Try to get API URL from secrets, fall back to environment, then default
+    # Try to get API URL from multiple sources for deployment flexibility
     try:
-        api_url = st.secrets.get("API_URL", "http://localhost:8000")
+        api_url = st.secrets.get("API_URL", None)
     except Exception:
-        # Fall back to environment variable or default
-        api_url = os.environ.get("API_URL", "http://localhost:8000")
-    
+        api_url = None
+
+    if not api_url:
+        # Check multiple environment variable names for compatibility
+        api_url = (
+            os.environ.get("API_BASE_URL") or  # Render/Vercel standard
+            os.environ.get("API_URL") or       # Custom
+            os.environ.get("FASTAPI_URL") or   # Alternative
+            "http://localhost:8000"            # Development default
+        )
+
     return ClinicalTrialAPIClient(api_url)
 
 def with_loading(func, *args, loading_text="Processing...", **kwargs):

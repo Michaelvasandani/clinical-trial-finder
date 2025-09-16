@@ -1,0 +1,57 @@
+services:
+  # FastAPI Backend
+  - type: web
+    name: clinical-trial-finder-api
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python chat_api.py
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clinical-trial-finder-db
+          property: connectionString
+      - key: ENVIRONMENT
+        value: production
+      - key: DATA_PATH
+        value: /opt/render/project/data
+      - key: EMBEDDINGS_PATH
+        value: /opt/render/project/embeddings
+      - key: CONVERSATIONS_PATH
+        value: /opt/render/project/conversations
+      - key: LOGS_PATH
+        value: /opt/render/project/logs
+      - key: INPUT_CSV_NAME
+        value: clinical_trials_latest.csv
+      - key: CORS_ORIGINS
+        value: https://clinical-trial-finder-ui.onrender.com,http://localhost:8501
+
+  # Streamlit Frontend
+  - type: web
+    name: clinical-trial-finder-ui
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0
+    envVars:
+      - key: API_BASE_URL
+        value: https://clinical-trial-finder-api.onrender.com
+
+  # PostgreSQL Database
+  - type: pserv
+    name: clinical-trial-finder-db
+    env: postgresql
+    plan: starter
+    databaseName: clinical_trials
+    user: clinical_trial_user
+
+# Persistent disk for embeddings and data
+disks:
+  - name: clinical-trial-data
+    mountPath: /opt/render/project/data
+    sizeGB: 10
+  - name: clinical-trial-embeddings
+    mountPath: /opt/render/project/embeddings
+    sizeGB: 10
