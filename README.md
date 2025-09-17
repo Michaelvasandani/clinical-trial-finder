@@ -2,13 +2,7 @@
 
 A conversational AI system that helps users find and understand clinical trials through intelligent search, patient profile matching, and natural language interaction.
 
-![Python](https://img.shields.io/badge/python-v3.11+-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-green.svg)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.28.1-red.svg)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -20,9 +14,9 @@ A conversational AI system that helps users find and understand clinical trials 
 - [Configuration](#configuration)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
-- [License](#license)
 
-## 🎯 Overview
+
+## Overview
 
 The Clinical Trial Finder combines cutting-edge AI technologies to make clinical trial discovery accessible and intelligent. It processes over 26,000 clinical trials from ClinicalTrials.gov, uses BioBERT embeddings for semantic search, and leverages GPT-4 for natural language understanding and patient profile extraction.
 
@@ -33,7 +27,7 @@ The Clinical Trial Finder combines cutting-edge AI technologies to make clinical
 - **Detailed Analysis**: Get AI-powered explanations of why trials match patient profiles
 - **Real-time Data**: Access up-to-date information from ClinicalTrials.gov
 
-## 🏗️ Architecture
+## 🏗Architecture
 
 ### System Components
 
@@ -457,7 +451,7 @@ RATE_LIMIT_DELAY = 1.5        # Seconds between requests
 MAX_RETRIES = 3               # Retry failed requests
 ```
 
-## 🛠️ Development
+## Development
 
 ### Project Structure
 ```
